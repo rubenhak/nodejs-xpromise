@@ -1,2 +1,2 @@
 
-module.exports = require('/lib/promise-extensions.js');
+module.exports = require('./lib/promise-extensions.js');
