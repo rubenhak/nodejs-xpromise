@@ -1,6 +1,6 @@
 {
   "name": "the-promise",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "An extension over promise library.",
   "main": "index.js",
   "directories": {
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/rubenhak/nodejs-xpromise.git"
   },
-  "author": "",
+  "author": "Ruben Hakopian",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/rubenhak/nodejs-xpromise/issues"
