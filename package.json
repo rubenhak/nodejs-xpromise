@@ -1,6 +1,6 @@
 {
   "name": "the-promise",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "An extension over promise library.",
   "main": "index.js",
   "directories": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/rubenhak/nodejs-xpromise#readme",
   "dependencies": {
-    "lodash": "^4.17.10",
-    "promise": "^8.0.1"
+    "lodash": "4.17.10",
+    "promise": "8.0.1"
   }
 }
