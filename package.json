@@ -1,6 +1,6 @@
 {
   "name": "the-promise",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "An extension over promise library.",
   "main": "index.js",
   "directories": {
