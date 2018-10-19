@@ -29,6 +29,20 @@ describe('retry.js', function() {
             })
         });
 
+        
+        it('twoTimesError', function () {
+            var counter = 0;
+            return Promise.retry(() => {
+                counter += 1;
+                if (counter <= 2) {
+                    throw new Error("Error Number " + counter);
+                }
+            }, 3, 100)
+            .then(() => {
+                should(counter).be.exactly(3);
+            })
+        });
+
         it('keepsFailing', function () {
             var counter = 0;
             var isThenCalled = false;
