@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/rubenhak/nodejs-xpromise#readme",
   "dependencies": {
+    "bluebird": "^3.5.2",
     "lodash": "4.17.10",
     "pify": "4.0.0",
     "promise": "8.0.1"
