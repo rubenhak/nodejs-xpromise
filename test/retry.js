@@ -50,6 +50,27 @@ describe('retry.js', function() {
             })
         });
 
+        it('canContinue', function () {
+            var counter = 0;
+            var isThenCalled = false;
+            var isCatchCalled = false;
+            return Promise.retry(() => {
+                counter += 1;
+                throw new Error("Error Number " + counter);
+            }, 3, 100, () => false)
+            .then(() => {
+                isThenCalled = true;
+            })
+            .catch(reason => {
+                isCatchCalled = true;
+            })
+            .then(() => {
+                should(isThenCalled).be.exactly(false);
+                should(isCatchCalled).be.exactly(true);
+                should(counter).be.exactly(1);
+            })
+        });
+
     });
 
 });

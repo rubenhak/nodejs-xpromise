@@ -1,4 +1,4 @@
-var Promise = require('promise');
+var Promise = require('bluebird');
 
 require('./lib/parallel')(Promise);
 require('./lib/pify')(Promise);
