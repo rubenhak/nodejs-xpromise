@@ -21,6 +21,15 @@ describe('parallel.js', function() {
                 should(resultAsMap).be.deepEqual({"Xaa": true, "Xbb": true, "Xcc": true})
             });
         });
+
+        it('null', function () {
+            return Promise.parallel(null, x => {
+                return "X" + x;
+            })
+            .then(result => {
+                should(result).be.deepEqual([])
+            });
+        });
     });
 
 });
