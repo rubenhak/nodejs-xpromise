@@ -74,9 +74,13 @@ Enables retry capability.
 **Signature:**
 
 Promise.retry(action, number, timeout, canContinueCb) : returns Promise.
+
 **action**: action to perform. Can return Promise.
+
 **number**: maximum number of times to retry.
+
 **timeout**: timeout in ms to retry.
+
 **canContinueCb**: An optional callback which tells whether a particual retry can be executed
 
 
@@ -92,7 +96,7 @@ function doSomething()
 
 **Usage 2:**
 ```js
-return Promise.retry(() => doSomething(), 3, 1000, () => {
+Promise.retry(() => doSomething(), 3, 1000, () => {
     if (new Date().getHours() > 10) {
         return false;
     }
