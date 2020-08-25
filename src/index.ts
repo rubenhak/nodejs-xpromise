@@ -1,9 +1,9 @@
-import { Promise } from 'bluebird';
+import { Promise as BasePromise } from 'bluebird';
 
-type Resolvable<R> = R | XPromise<R>;
+type Resolvable<R> = R | Promise<R>;
 type MapperFunction<T, R> = (item: T) => Resolvable<R>;
 
-class XPromise<T> extends Promise<T> {
+class Promise<T> extends BasePromise<T> {
     static parallel<T, R>(items: T[] | null, action: MapperFunction<T, R>): Promise<R[]> {
         if (!items) {
             return Promise.resolve([]);
@@ -35,7 +35,7 @@ class XPromise<T> extends Promise<T> {
         if (!timeoutMs) {
             timeoutMs = 0;
         }
-        return XPromise._promiseRetryLoop(action, count, timeoutMs, canContinueCb);
+        return Promise._promiseRetryLoop(action, count, timeoutMs, canContinueCb);
     }
 
     static _promiseRetryLoop<T>(
@@ -45,7 +45,7 @@ class XPromise<T> extends Promise<T> {
         canContinueCb?: (reason: any) => boolean,
     ): Promise<T> {
         return Promise.try(action).catch((reason) => {
-            return XPromise._promiseRetryHandleFailure(reason, action, count, timeoutMs, canContinueCb);
+            return Promise._promiseRetryHandleFailure(reason, action, count, timeoutMs, canContinueCb);
         });
     }
 
@@ -62,8 +62,8 @@ class XPromise<T> extends Promise<T> {
                     throw reason;
                 }
             }
-            return XPromise.timeout(timeoutMs).then(() =>
-                XPromise._promiseRetryLoop(action, count - 1, timeoutMs, canContinueCb),
+            return Promise.timeout(timeoutMs).then(() =>
+                Promise._promiseRetryLoop(action, count - 1, timeoutMs, canContinueCb),
             );
         }
 
@@ -71,12 +71,16 @@ class XPromise<T> extends Promise<T> {
     }
 
     static timeout(timeoutMs: number): Promise<void> {
-        return new Promise<void>(function (fulfill, reject) {
+        if (!timeoutMs) {
+            return Promise.resolve();
+        }
+        return new BasePromise<void>(function(fulfill, reject) {
             setTimeout(() => {
                 fulfill();
             }, timeoutMs);
-        });
+        })
+        .then(() => Promise.resolve());
     }
 }
 
-export { XPromise as Promise };
+export { Promise };
