@@ -31,8 +31,8 @@
   "homepage": "https://github.com/rubenhak/nodejs-xpromise#readme",
   "license": "Propriatery",
   "dependencies": {
-    "@types/bluebird": "^3.5.32",
-    "bluebird": "^3.7.2"
+    "@types/bluebird": "3.5.32",
+    "bluebird": "3.7.2"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",

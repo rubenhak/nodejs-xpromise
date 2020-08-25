@@ -1,7 +1,7 @@
-var assert = require('assert');
-var should = require('should');
+import 'mocha';
+import should = require('should');
 
-var Promise = require('../dist');
+import { Promise } from '../src';
 
     describe('Promise.retry', function() {
      

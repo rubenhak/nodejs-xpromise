@@ -37,18 +37,24 @@ class XPromise<T> extends Promise<T>
     // }
     
 
-    static retry<T>(action: () => Resolvable<T>, count: number, timeoutMs: number, canContinueCb: (reason: any) => boolean): Promise<T> {
+    static retry<T>(action: () => Resolvable<T>, count?: number, timeoutMs?: number, canContinueCb?: (reason: any) => boolean): Promise<T> {
+        if (!count) {
+            count = 0;
+        }
+        if (!timeoutMs) {
+            timeoutMs = 0;
+        }
         return XPromise._promiseRetryLoop(action, count, timeoutMs, canContinueCb);
     }
     
-    static _promiseRetryLoop<T>(action: () => Resolvable<T>, count: number, timeoutMs: number, canContinueCb: (reason: any) => boolean): Promise<T> {
+    static _promiseRetryLoop<T>(action: () => Resolvable<T>, count: number, timeoutMs: number, canContinueCb?: (reason: any) => boolean): Promise<T> {
         return Promise.try(action)
             .catch(reason => {
                 return XPromise._promiseRetryHandleFailure(reason, action, count, timeoutMs, canContinueCb);
             });
     }
     
-    static _promiseRetryHandleFailure<T>(reason: any, action: () => Resolvable<T>, count: number, timeoutMs: number, canContinueCb: (reason: any) => boolean): Promise<T>
+    static _promiseRetryHandleFailure<T>(reason: any, action: () => Resolvable<T>, count: number, timeoutMs: number, canContinueCb?: (reason: any) => boolean): Promise<T>
     {
         if (count > 0) {
             if (canContinueCb)
