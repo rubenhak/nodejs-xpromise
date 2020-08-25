@@ -47,13 +47,6 @@ describe('pify.js', function() {
             })
         });
 
-        it('wrapper', function () {
-            return Promise.pify(action)("chuck")
-            .then(result => {
-                should(result).be.exactly("chuck norris")
-            })
-        });
-
 
     });
 
