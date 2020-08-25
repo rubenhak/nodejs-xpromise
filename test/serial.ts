@@ -1,20 +1,19 @@
-var assert = require('assert');
-var should = require('should');
+import 'mocha';
+import should = require('should');
 
-var Promise = require('../index');
+import { Promise } from '../src';
 
-describe('parallel.js', function() {
-    describe('Promise.parallel', function() {
+    describe('Promise.serial', () => {
         it('normal', function () {
-            var processed = {};
-            return Promise.parallel(["aa", "bb", "cc"], x => {
+            var processed : Record<string, boolean> = {};
+            return Promise.serial(["aa", "bb", "cc"], x => {
                 processed[x] = true;
                 return "X" + x;
             })
             .then(result => {
                 should(processed).be.deepEqual({"aa": true, "bb": true, "cc": true})
 
-                var resultAsMap = {};
+                var resultAsMap : Record<string, boolean> = {};
                 for(var x of result) {
                     resultAsMap[x] = true;
                 }
@@ -23,7 +22,7 @@ describe('parallel.js', function() {
         });
 
         it('null', function () {
-            return Promise.parallel(null, x => {
+            return Promise.serial(null, x => {
                 return "X" + x;
             })
             .then(result => {
@@ -31,5 +30,3 @@ describe('parallel.js', function() {
             });
         });
     });
-
-});

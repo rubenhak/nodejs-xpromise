@@ -1,7 +1,7 @@
 var assert = require('assert');
 var should = require('should');
 
-var Promise = require('../index');
+var Promise = require('../dist');
 
 
 function action(name, cb) {

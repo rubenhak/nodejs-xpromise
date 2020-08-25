@@ -1,9 +1,8 @@
 var assert = require('assert');
 var should = require('should');
 
-var Promise = require('../index');
+var Promise = require('../dist');
 
-describe('retry.js', function() {
     describe('Promise.retry', function() {
      
         it('noError', function () {
@@ -86,5 +85,3 @@ describe('retry.js', function() {
         });
 
     });
-
-});
