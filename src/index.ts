@@ -83,4 +83,5 @@ class Promise<T> extends BasePromise<T> {
     }
 }
 
+export default Promise;
 export { Promise };

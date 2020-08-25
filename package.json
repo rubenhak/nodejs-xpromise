@@ -1,6 +1,6 @@
 {
   "name": "the-promise",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "An extension over bluebird promise library.",
   "main": "dist/index.js",
   "types": "dist",
