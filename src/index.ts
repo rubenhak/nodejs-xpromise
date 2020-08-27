@@ -81,6 +81,11 @@ class Promise<T> extends BasePromise<T> {
         })
         .then(() => Promise.resolve());
     }
+
+    static construct<T>(callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void) : Promise<T> {
+        return new BasePromise<T>(callback)
+            .then((res: T) => Promise.resolve(res));
+    }
 }
 
 export default Promise;
