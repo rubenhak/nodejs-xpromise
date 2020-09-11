@@ -1,9 +1,70 @@
 import { Promise as BasePromise } from 'bluebird';
+import _ from 'the-lodash';
+import { Executor } from './executor';
 
-type Resolvable<R> = R | Promise<R>;
-type MapperFunction<T, R> = (item: T) => Resolvable<R>;
+export type Resolvable<R> = R | Promise<R>;
+export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
 
-class Promise<T> extends BasePromise<T> {
+export interface ExecuteOptions {
+    concurrency: number;
+    retryCount?: number;
+    coolDownOnFailure?: boolean;
+    initRetryDelay?: number;
+    maxRetryDelay?: number;
+    retryDelayCoeff?: number;
+    waitCompleteBeforeExit?: boolean;
+}
+
+export class CExecuteOptions {
+    concurrency = 100;
+    retryCount = 1;
+    coolDownOnFailure = false;
+    initRetryDelay = 500;
+    maxRetryDelay = 5000;
+    retryDelayCoeff = 2.0;
+    waitCompleteBeforeExit = false;
+}
+
+export class Promise<T> extends BasePromise<T> {
+
+    /*
+     * Processes items in parallel
+     */
+    static execute<T, R>(items: T[] | null, action: MapperFunction<T, R>, options?: ExecuteOptions): Promise<R[]> {
+        if (!items) {
+            return Promise.resolve([]);
+        }
+        const myOptions = new CExecuteOptions();
+        if (options) {
+            if (!_.isNullOrUndefined(options.retryCount)) {
+                myOptions.retryCount = options.retryCount!;
+            }
+            if (!_.isNullOrUndefined(options.concurrency)) {
+                myOptions.concurrency = options.concurrency!;
+            }
+            if (!_.isNullOrUndefined(options.coolDownOnFailure)) {
+                myOptions.coolDownOnFailure = options.coolDownOnFailure!;
+            }
+            if (!_.isNullOrUndefined(options.initRetryDelay)) {
+                myOptions.initRetryDelay = options.initRetryDelay!;
+            }
+            if (!_.isNullOrUndefined(options.maxRetryDelay)) {
+                myOptions.maxRetryDelay = options.maxRetryDelay!;
+            }
+            if (!_.isNullOrUndefined(options.retryDelayCoeff)) {
+                myOptions.retryDelayCoeff = options.retryDelayCoeff!;
+            }
+            if (!_.isNullOrUndefined(options.waitCompleteBeforeExit)) {
+                myOptions.waitCompleteBeforeExit = options.waitCompleteBeforeExit!;
+            }
+        }
+        const executor = new Executor<T, R>(items, action, myOptions);
+        return executor.execute();
+    }
+
+    /*
+     * Processes items in parallel
+     */
     static parallel<T, R>(items: T[] | null, action: MapperFunction<T, R>): Promise<R[]> {
         if (!items) {
             return Promise.resolve([]);
@@ -11,11 +72,14 @@ class Promise<T> extends BasePromise<T> {
         return Promise.map(items, action);
     }
 
+    /*
+     * Processes items in sequence
+     */
     static serial<T, R>(items: T[] | null, action: MapperFunction<T, R>): Promise<R[]> {
         if (!items) {
             return Promise.resolve([]);
         }
-        let results: R[] = [];
+        const results: R[] = [];
         return Promise.each(items, (x) => {
             return Promise.resolve(action(x)).then((result) => {
                 results.push(result);
@@ -23,6 +87,9 @@ class Promise<T> extends BasePromise<T> {
         }).then(() => results);
     }
 
+    /*
+     * Simple retry logic
+     */
     static retry<T>(
         action: () => Resolvable<T>,
         count?: number,
@@ -38,7 +105,7 @@ class Promise<T> extends BasePromise<T> {
         return Promise._promiseRetryLoop(action, count, timeoutMs, canContinueCb);
     }
 
-    static _promiseRetryLoop<T>(
+    private static _promiseRetryLoop<T>(
         action: () => Resolvable<T>,
         count: number,
         timeoutMs: number,
@@ -49,7 +116,7 @@ class Promise<T> extends BasePromise<T> {
         });
     }
 
-    static _promiseRetryHandleFailure<T>(
+    private static _promiseRetryHandleFailure<T>(
         reason: any,
         action: () => Resolvable<T>,
         count: number,
@@ -70,6 +137,9 @@ class Promise<T> extends BasePromise<T> {
         throw reason;
     }
 
+    /*
+     * Returns a promise which resolves in specified time delay
+     */
     static timeout(timeoutMs: number): Promise<void> {
         if (!timeoutMs) {
             return Promise.resolve();
@@ -82,11 +152,11 @@ class Promise<T> extends BasePromise<T> {
         .then(() => Promise.resolve());
     }
 
+    /*
+     * Creates a new Promise
+     */
     static construct<T>(callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void) : Promise<T> {
         return new BasePromise<T>(callback)
             .then((res: T) => Promise.resolve(res));
     }
 }
-
-export default Promise;
-export { Promise };

@@ -1,11 +1,11 @@
 import 'mocha';
 import should = require('should');
 
-import Promise from '../src';
+import { Promise } from '../src';
 
 describe('Promise.retry', function () {
     it('noError', function () {
-        var counter = 0;
+        let counter = 0;
         return Promise.retry(() => {
             counter += 1;
         }).then(() => {
@@ -14,7 +14,7 @@ describe('Promise.retry', function () {
     });
 
     it('oneTimeError', function () {
-        var counter = 0;
+        let counter = 0;
         return Promise.retry(
             () => {
                 counter += 1;
@@ -30,7 +30,7 @@ describe('Promise.retry', function () {
     });
 
     it('twoTimesError', function () {
-        var counter = 0;
+        let counter = 0;
         return Promise.retry(
             () => {
                 counter += 1;
@@ -46,9 +46,9 @@ describe('Promise.retry', function () {
     });
 
     it('keepsFailing', function () {
-        var counter = 0;
-        var isThenCalled = false;
-        var isCatchCalled = false;
+        let counter = 0;
+        let isThenCalled = false;
+        let isCatchCalled = false;
         return Promise.retry(
             () => {
                 counter += 1;
@@ -71,9 +71,9 @@ describe('Promise.retry', function () {
     });
 
     it('canContinue', function () {
-        var counter = 0;
-        var isThenCalled = false;
-        var isCatchCalled = false;
+        let counter = 0;
+        let isThenCalled = false;
+        let isCatchCalled = false;
         return Promise.retry(
             () => {
                 counter += 1;
