@@ -6,7 +6,7 @@ export type Resolvable<R> = R | Promise<R>;
 export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
 
 export interface ExecuteOptions {
-    concurrency: number;
+    concurrency?: number;
     retryCount?: number;
     coolDownOnFailure?: boolean;
     initRetryDelay?: number;
@@ -17,7 +17,7 @@ export interface ExecuteOptions {
 
 export class CExecuteOptions {
     concurrency = 100;
-    retryCount = 1;
+    retryCount = 0;
     coolDownOnFailure = false;
     initRetryDelay = 500;
     maxRetryDelay = 5000;
@@ -31,7 +31,7 @@ export class Promise<T> extends BasePromise<T> {
      * Processes items in parallel
      */
     static execute<T, R>(items: T[] | null, action: MapperFunction<T, R>, options?: ExecuteOptions): Promise<R[]> {
-        if (!items) {
+        if (items == null || !items) {
             return Promise.resolve([]);
         }
         const myOptions = new CExecuteOptions();

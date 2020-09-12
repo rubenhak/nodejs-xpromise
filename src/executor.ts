@@ -145,37 +145,54 @@ export class Executor<T, R> {
     _processItem(itemInfo : ItemInfo<T>) : void
     {
         this.processing[itemInfo.index] = itemInfo;
-        Promise.resolve(this.action(itemInfo.item))
-            .then((result) => {
-                delete this.processing[itemInfo.index];
-                this.results[itemInfo.index] = result;
-                this._tryProcess();
-            })
-            .catch((reason) => {
-                delete this.processing[itemInfo.index];
-                itemInfo.errors ++;
-                itemInfo.lastError = reason;
+        try
+        {
+            const actionResult = this.action(itemInfo.item);
+            Promise.resolve(actionResult)
+                .then((result) => {
+                    this._handleItemFinished(itemInfo, result);
+                })
+                .catch((reason) => {
+                    this._handleItemFailed(itemInfo, reason);
+                })
+                ;
+        }
+        catch(reason)
+        {
+            this._handleItemFailed(itemInfo, reason);
+        }
 
-                if (itemInfo.errors > this.options.retryCount) {
-                    this.isProcessingFailed = true;
-                } else {
+        this._tryProcess();
+    }
 
-                    if (itemInfo.delay === null) {
-                        itemInfo.delay = this.options.initRetryDelay;
-                    } else {
-                        itemInfo.delay = Math.min(this.options.maxRetryDelay, itemInfo.delay * this.options.retryDelayCoeff);
-                    }
+    private _handleItemFinished(itemInfo : ItemInfo<T>, result: R) : void
+    {
+        delete this.processing[itemInfo.index];
+        this.results[itemInfo.index] = result;
+        this._tryProcess();
+    }
 
-                    itemInfo.lastFailureMoment = moment();
-                    this.items.push(itemInfo);
-                    if (this.options.coolDownOnFailure) {
-                        this.waitingCoolDown = true;
-                    }
-                }
-                this._tryProcess();
-            })
-            ;
+    private _handleItemFailed(itemInfo : ItemInfo<T>, reason: any) : void
+    {
+        delete this.processing[itemInfo.index];
+        itemInfo.errors ++;
+        itemInfo.lastError = reason;
 
+        if (itemInfo.errors > this.options.retryCount) {
+            this.isProcessingFailed = true;
+        } else {
+            if (itemInfo.delay === null) {
+                itemInfo.delay = this.options.initRetryDelay;
+            } else {
+                itemInfo.delay = Math.min(this.options.maxRetryDelay, itemInfo.delay * this.options.retryDelayCoeff);
+            }
+
+            itemInfo.lastFailureMoment = moment();
+            this.items.push(itemInfo);
+            if (this.options.coolDownOnFailure) {
+                this.waitingCoolDown = true;
+            }
+        }
         this._tryProcess();
     }
 
