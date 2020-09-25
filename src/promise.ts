@@ -2,16 +2,22 @@ import { Promise as BasePromise } from 'bluebird';
 import _ from 'the-lodash';
 import { Executor } from './executor';
 
-
 interface PromiseLike<T> {
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): PromiseLike<TResult1 | TResult2>;
+    then<TResult1 = T, TResult2 = never>(
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
+    ): PromiseLike<TResult1 | TResult2>;
 }
 
 interface IPromise<T> {
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): IPromise<TResult1 | TResult2>;
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): IPromise<T | TResult>;
+    then<TResult1 = T, TResult2 = never>(
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
+    ): IPromise<TResult1 | TResult2>;
+    catch<TResult = never>(
+        onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null,
+    ): IPromise<T | TResult>;
 }
-
 
 export type Resolvable<R> = R | Promise<R>;
 export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
@@ -37,7 +43,6 @@ export class CExecuteOptions {
 }
 
 export class Promise<T> extends BasePromise<T> {
-
     /*
      * Processes items in parallel
      */
@@ -155,29 +160,28 @@ export class Promise<T> extends BasePromise<T> {
         if (!timeoutMs) {
             return Promise.resolve();
         }
-        return new BasePromise<void>(function(fulfill, reject) {
+        return new BasePromise<void>(function (fulfill, reject) {
             setTimeout(() => {
                 fulfill();
             }, timeoutMs);
-        })
-        .then(() => Promise.resolve());
+        }).then(() => Promise.resolve());
     }
 
     /*
      * Creates a new Promise
      */
-    static construct<T>(callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void) : Promise<T> {
-        return new BasePromise<T>(callback)
-            .then((res: T) => Promise.resolve(res));
+    static construct<T>(
+        callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void,
+    ): Promise<T> {
+        return new BasePromise<T>(callback).then((res: T) => Promise.resolve(res));
     }
 
     /*
      * Convert
      */
-    static convert<T>(another: IPromise<T>) : Promise<T> {
+    static convert<T>(another: IPromise<T>): Promise<T> {
         return Promise.construct<T>((resolve, reject) => {
-            another.then(result => resolve(result))
-                .catch(reason => reject(reason));
+            another.then((result) => resolve(result)).catch((reason) => reject(reason));
         });
     }
 }

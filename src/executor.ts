@@ -12,7 +12,6 @@ interface ItemInfo<T> {
 }
 
 export class Executor<T, R> {
-
     origItems: ItemInfo<T>[] = [];
     items: ItemInfo<T>[] = [];
     processing: Record<number, ItemInfo<T>> = {};
@@ -23,12 +22,10 @@ export class Executor<T, R> {
     rootReject?: (error?: any) => void;
     isProcessingFailed = false;
     waitingCoolDown = false;
-    pauseTillNextTry? : number;
+    pauseTillNextTry?: number;
 
-    constructor(items: T[], action: MapperFunction<T, R>, options: CExecuteOptions)
-    {
-        for(let i = 0; i < items.length; i++)
-        {
+    constructor(items: T[], action: MapperFunction<T, R>, options: CExecuteOptions) {
+        for (let i = 0; i < items.length; i++) {
             const itemInfo = {
                 item: items[i],
                 index: i,
@@ -42,11 +39,11 @@ export class Executor<T, R> {
         this.options = options;
     }
 
-    get unfinishedCount() : number {
+    get unfinishedCount(): number {
         return _.keys(this.processing).length;
     }
 
-    execute() : Promise<R[]> {
+    execute(): Promise<R[]> {
         return Promise.construct((resolve, reject) => {
             this.rootResolve = resolve;
             this.rootReject = reject;
@@ -55,20 +52,14 @@ export class Executor<T, R> {
         });
     }
 
-    private _tryProcess() : void
-    {
+    private _tryProcess(): void {
         if (this.isProcessingFailed) {
-            if (this.options.waitCompleteBeforeExit)
-            {
-                if (this.unfinishedCount === 0)
-                {
+            if (this.options.waitCompleteBeforeExit) {
+                if (this.unfinishedCount === 0) {
                     this._finishFailure();
                 }
-            }
-            else
-            {
+            } else {
                 this._finishFailure();
-
             }
             return;
         }
@@ -87,42 +78,32 @@ export class Executor<T, R> {
 
         const now = moment();
 
-        for(let i = 0; i < this.items.length; i++)
-        {
+        for (let i = 0; i < this.items.length; i++) {
             const itemInfo = this.items[i];
-            if (this._canProcessItem(now, itemInfo))
-            {
-                this.items = [
-                    ...this.items.slice(0, i),
-                    ...this.items.slice(i + 1)
-                ];
+            if (this._canProcessItem(now, itemInfo)) {
+                this.items = [...this.items.slice(0, i), ...this.items.slice(i + 1)];
                 this._processItem(itemInfo);
                 return;
             }
         }
 
-        if (this.items.length > 0)
-        {
+        if (this.items.length > 0) {
             const pauseMs = this.pauseTillNextTry ?? 500;
-            Promise.timeout(pauseMs)
-                .then(() => this._tryProcess());
+            Promise.timeout(pauseMs).then(() => this._tryProcess());
             return;
         }
 
         if (this.unfinishedCount === 0) {
             this._finishSuccess();
         }
-
     }
 
-    _canProcessItem(now: moment.Moment, itemInfo : ItemInfo<T>) : boolean
-    {
+    _canProcessItem(now: moment.Moment, itemInfo: ItemInfo<T>): boolean {
         if (!itemInfo.lastFailureMoment) {
             return true;
         }
 
-        if (itemInfo.delay) 
-        {
+        if (itemInfo.delay) {
             const diff = moment.duration(now.diff(itemInfo.lastFailureMoment)).asMilliseconds();
             if (diff >= itemInfo.delay) {
                 return true;
@@ -133,20 +114,16 @@ export class Executor<T, R> {
                     this.pauseTillNextTry = Math.min(this.pauseTillNextTry!, diff);
                 }
             }
-        }
-        else
-        {
+        } else {
             return true;
         }
 
         return false;
     }
 
-    _processItem(itemInfo : ItemInfo<T>) : void
-    {
+    _processItem(itemInfo: ItemInfo<T>): void {
         this.processing[itemInfo.index] = itemInfo;
-        try
-        {
+        try {
             const actionResult = this.action(itemInfo.item);
             Promise.resolve(actionResult)
                 .then((result) => {
@@ -154,28 +131,23 @@ export class Executor<T, R> {
                 })
                 .catch((reason) => {
                     this._handleItemFailed(itemInfo, reason);
-                })
-                ;
-        }
-        catch(reason)
-        {
+                });
+        } catch (reason) {
             this._handleItemFailed(itemInfo, reason);
         }
 
         this._tryProcess();
     }
 
-    private _handleItemFinished(itemInfo : ItemInfo<T>, result: R) : void
-    {
+    private _handleItemFinished(itemInfo: ItemInfo<T>, result: R): void {
         delete this.processing[itemInfo.index];
         this.results[itemInfo.index] = result;
         this._tryProcess();
     }
 
-    private _handleItemFailed(itemInfo : ItemInfo<T>, reason: any) : void
-    {
+    private _handleItemFailed(itemInfo: ItemInfo<T>, reason: any): void {
         delete this.processing[itemInfo.index];
-        itemInfo.errors ++;
+        itemInfo.errors++;
         itemInfo.lastError = reason;
 
         if (itemInfo.errors > this.options.retryCount) {
@@ -196,8 +168,7 @@ export class Executor<T, R> {
         this._tryProcess();
     }
 
-    private _finishSuccess() : void
-    {
+    private _finishSuccess(): void {
         if (!this.rootResolve) {
             return;
         }
@@ -207,21 +178,18 @@ export class Executor<T, R> {
         rootResolve(this.results);
     }
 
-    private _finishFailure(error?: any) : void
-    {
+    private _finishFailure(error?: any): void {
         if (!this.rootReject) {
             return;
         }
         const rootReject = this.rootReject!;
         this._finish();
-        const errors = this.origItems.map(x => x.lastError).filter(x => x);
+        const errors = this.origItems.map((x) => x.lastError).filter((x) => x);
         rootReject(errors);
     }
 
-    private _finish()
-    {
+    private _finish() {
         this.rootResolve = undefined;
         this.rootReject = undefined;
     }
-
 }
