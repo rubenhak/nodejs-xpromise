@@ -2,6 +2,17 @@ import { Promise as BasePromise } from 'bluebird';
 import _ from 'the-lodash';
 import { Executor } from './executor';
 
+
+interface PromiseLike<T> {
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): PromiseLike<TResult1 | TResult2>;
+}
+
+interface IPromise<T> {
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): IPromise<TResult1 | TResult2>;
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): IPromise<T | TResult>;
+}
+
+
 export type Resolvable<R> = R | Promise<R>;
 export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
 
@@ -158,5 +169,15 @@ export class Promise<T> extends BasePromise<T> {
     static construct<T>(callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void) : Promise<T> {
         return new BasePromise<T>(callback)
             .then((res: T) => Promise.resolve(res));
+    }
+
+    /*
+     * Convert
+     */
+    static convert<T>(another: IPromise<T>) : Promise<T> {
+        return Promise.construct<T>((resolve, reject) => {
+            another.then(result => resolve(result))
+                .catch(reason => reject(reason));
+        });
     }
 }
