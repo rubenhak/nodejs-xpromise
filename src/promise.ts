@@ -42,6 +42,23 @@ export class CExecuteOptions {
     waitCompleteBeforeExit = false;
 }
 
+export interface RetryOptions {
+    retryCount?: number;
+    initRetryDelay?: number;
+    maxRetryDelay?: number;
+    retryDelayCoeff?: number;
+    canContinueCb?: (reason: any) => Resolvable<boolean>,
+}
+
+export class CRetryOptions {
+    retryCount = 3;
+    retryTimeout = 0;
+    initRetryDelay = 500;
+    maxRetryDelay = 5000;
+    retryDelayCoeff = 2.0;
+    canContinueCb? : (reason: any) => Resolvable<boolean> = undefined;
+}
+
 export class Promise<T> extends BasePromise<T> {
     /*
      * Processes items in parallel
@@ -108,49 +125,81 @@ export class Promise<T> extends BasePromise<T> {
      */
     static retry<T>(
         action: () => Resolvable<T>,
-        count?: number,
-        timeoutMs?: number,
-        canContinueCb?: (reason: any) => boolean,
+        options?: RetryOptions
     ): Promise<T> {
-        if (!count) {
-            count = 0;
+
+        const myOptions = new CRetryOptions();
+        if (options) {
+            if (!_.isNullOrUndefined(options.retryCount)) {
+                myOptions.retryCount = options.retryCount!;
+            }
+            if (!_.isNullOrUndefined(options.initRetryDelay)) {
+                myOptions.initRetryDelay = options.initRetryDelay!;
+            }
+            if (!_.isNullOrUndefined(options.maxRetryDelay)) {
+                myOptions.maxRetryDelay = options.maxRetryDelay!;
+            }
+            if (!_.isNullOrUndefined(options.retryDelayCoeff)) {
+                myOptions.retryDelayCoeff = options.retryDelayCoeff!;
+            }
+            if (!_.isNullOrUndefined(options.canContinueCb)) {
+                myOptions.canContinueCb = options.canContinueCb!;
+            }
         }
-        if (!timeoutMs) {
-            timeoutMs = 0;
-        }
-        return Promise._promiseRetryLoop(action, count, timeoutMs, canContinueCb);
+        myOptions.retryTimeout = myOptions.initRetryDelay;
+
+        return Promise._promiseRetryLoop(action, myOptions);
     }
 
     private static _promiseRetryLoop<T>(
         action: () => Resolvable<T>,
-        count: number,
-        timeoutMs: number,
-        canContinueCb?: (reason: any) => boolean,
+        options: CRetryOptions,
     ): Promise<T> {
         return Promise.try(action).catch((reason) => {
-            return Promise._promiseRetryHandleFailure(reason, action, count, timeoutMs, canContinueCb);
+            return Promise._promiseRetryHandleFailure(reason, action, options);
         });
     }
 
     private static _promiseRetryHandleFailure<T>(
         reason: any,
         action: () => Resolvable<T>,
-        count: number,
-        timeoutMs: number,
-        canContinueCb?: (reason: any) => boolean,
+        options: CRetryOptions
     ): Promise<T> {
-        if (count > 0) {
-            if (canContinueCb) {
-                if (!canContinueCb(reason)) {
-                    throw reason;
-                }
+        if (options.retryCount > 0) {
+            options.retryTimeout = Math.min(options.retryTimeout * options.retryDelayCoeff, options.maxRetryDelay);
+            options.retryCount --;
+
+            if (options.canContinueCb) {
+                return Promise.resolve()
+                    .then(() => {
+                        return Promise.resolve()
+                            .then(() => options.canContinueCb!(reason))
+                            .catch(reason => {
+                                return Promise._promiseRetryHandleFailure(reason, action, options);
+                            })
+                            .then(result => {
+                                if (result) {
+                                    return Promise._promiseRetryWithTimeout(action, options);
+                                } else {
+                                    throw reason;
+                                }
+                            })
+                    })
             }
-            return Promise.timeout(timeoutMs).then(() =>
-                Promise._promiseRetryLoop(action, count - 1, timeoutMs, canContinueCb),
-            );
+
+            return Promise._promiseRetryWithTimeout(action, options);
         }
 
         throw reason;
+    }
+
+    private static _promiseRetryWithTimeout<T>(
+        action: () => Resolvable<T>,
+        options: CRetryOptions,
+    ): Promise<T> {
+        return Promise.timeout(options.retryTimeout).then(() =>
+            Promise._promiseRetryLoop(action, options)
+        );
     }
 
     /*

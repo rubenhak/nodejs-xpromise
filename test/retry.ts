@@ -22,8 +22,10 @@ describe('Promise.retry', function () {
                     throw new Error('Error Number ' + counter);
                 }
             },
-            3,
-            100,
+            {
+                retryCount: 3,
+                initRetryDelay: 100
+            }
         ).then(() => {
             should(counter).be.exactly(2);
         });
@@ -38,8 +40,10 @@ describe('Promise.retry', function () {
                     throw new Error('Error Number ' + counter);
                 }
             },
-            3,
-            100,
+            {
+                retryCount: 3,
+                initRetryDelay: 100
+            }
         ).then(() => {
             should(counter).be.exactly(3);
         });
@@ -54,8 +58,10 @@ describe('Promise.retry', function () {
                 counter += 1;
                 throw new Error('Error Number ' + counter);
             },
-            3,
-            100,
+            {
+                retryCount: 3,
+                initRetryDelay: 100
+            }
         )
             .then(() => {
                 isThenCalled = true;
@@ -79,9 +85,11 @@ describe('Promise.retry', function () {
                 counter += 1;
                 throw new Error('Error Number ' + counter);
             },
-            3,
-            100,
-            () => false,
+            {
+                retryCount: 3,
+                initRetryDelay: 100,
+                canContinueCb: () => false
+            }
         )
             .then(() => {
                 isThenCalled = true;
@@ -94,5 +102,26 @@ describe('Promise.retry', function () {
                 should(isCatchCalled).be.exactly(true);
                 should(counter).be.exactly(1);
             });
+    });
+
+    it('successWithCanContinuePromise', function () {
+        let counter = 0;
+        return Promise.retry(
+            () => {
+                counter += 1;
+                if (counter <= 2) {
+                    throw new Error('Error Number ' + counter);
+                }
+            },
+            {
+                retryCount: 3,
+                initRetryDelay: 100,
+                canContinueCb: () => {
+                    return Promise.timeout(100).then(() => true);
+                }
+            }
+        ).then(() => {
+            should(counter).be.exactly(3);
+        });
     });
 });
