@@ -24,8 +24,8 @@ describe('Promise.retry', function () {
             },
             {
                 retryCount: 3,
-                initRetryDelay: 100
-            }
+                initRetryDelay: 100,
+            },
         ).then(() => {
             should(counter).be.exactly(2);
         });
@@ -42,8 +42,8 @@ describe('Promise.retry', function () {
             },
             {
                 retryCount: 3,
-                initRetryDelay: 100
-            }
+                initRetryDelay: 100,
+            },
         ).then(() => {
             should(counter).be.exactly(3);
         });
@@ -60,8 +60,8 @@ describe('Promise.retry', function () {
             },
             {
                 retryCount: 3,
-                initRetryDelay: 100
-            }
+                initRetryDelay: 100,
+            },
         )
             .then(() => {
                 isThenCalled = true;
@@ -88,8 +88,8 @@ describe('Promise.retry', function () {
             {
                 retryCount: 3,
                 initRetryDelay: 100,
-                canContinueCb: () => false
-            }
+                canContinueCb: () => false,
+            },
         )
             .then(() => {
                 isThenCalled = true;
@@ -118,8 +118,8 @@ describe('Promise.retry', function () {
                 initRetryDelay: 100,
                 canContinueCb: () => {
                     return Promise.timeout(100).then(() => true);
-                }
-            }
+                },
+            },
         ).then(() => {
             should(counter).be.exactly(3);
         });
