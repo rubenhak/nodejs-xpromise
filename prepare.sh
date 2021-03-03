@@ -6,6 +6,5 @@ cd $MY_DIR
 rm -rf node_modules/
 rm -rf dist/
 
-npm install --ignore-scripts
-npm install --only=dev --ignore-scripts
-npm update bluebird --ignore-scripts
+npm install
+npm update bluebird the-lodash
