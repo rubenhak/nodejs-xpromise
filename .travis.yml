@@ -1,11 +1,11 @@
 language: node_js
 node_js:
-  - "stable"
-
+- stable
 deploy:
   provider: npm
-  email: "ruben.hakopian@gmail.com"
-  api_key: "YOUR_AUTH_TOKEN"
+  email: ruben.hakopian@gmail.com
+  api_key:
+    secure: LWGN6hACfU5Uv5RsPtwnm0tpyQ+mrjcJDuGtW2e5Y93f3A7H/UGzJpU3no9ogZQfNnieG/HsXpRVJ+Qq09/oxgPY8umzDQTpzwJ49Xifup5nJCS9jV+Iaj99BjtKZgaRN4ut4h/FqFI3eiHyvQDFvvkZXNlTkk8GZUDVTLoryHq7qELazYGDPxSAUGnWS6o2CZZe3Oxoz1awrKveIyxSlx13xnBAcyvIx/X98OBS4l6s3CCh9zposcMUjytiTMkjb9F65Vb+9VC4ekmTB9WrVC2K2U3ekBFmZuBFqwIMfklYCCl+4eDT05k7C2/5I7x7tw0Go7u45yc3BR/AZWe0uWNDWqbrwFRMDvukok4NOUylfgco5JUShtmym1TomnKXDQGCpd/L50s0E74uzs8itMTMNzCMOOF1bimfY58c8L8CSHK2XjG/nU6J61apu1PFqw4Cb74ISwdgycWgwFJUXmB+72ASqS+fylcKMMx/EU1CZWB3vhyl/z7AXidLgyUxbTfmDuNkQrVErq7uCNKRXOn0sTJpP8OsXh4vxl3EfyGguEh9r1PQRpVtu2dlqhWdRuCVJQY6jDAQKSwTfheD71sZ1Jr7MIGuCiqobTJJaUL4IfOL1VHBnY4+joW422MkK+030bo4CGFqiLKkf7Mqb1cm7EmMxjqNVQNVwTkO3gI=
   on:
     branch: master
     tags: true
