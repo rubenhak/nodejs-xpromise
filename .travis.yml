@@ -1,7 +1,14 @@
 language: node_js
 node_js:
 - stable
+before_script:
+  - npm run build
+before_deploy:
+  - pwd
+  - ls -la
+  - ls -la dist/
 deploy:
+  skip_cleanup: true
   provider: npm
   email: ruben.hakopian@gmail.com
   api_key:
