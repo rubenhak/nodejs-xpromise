@@ -25,3 +25,6 @@ if [ $RESULT -ne 0 ]; then
   echo "VERSION PATCH failed"
   exit 1;
 fi
+
+git pull --rebase
+git push --follow-tags
