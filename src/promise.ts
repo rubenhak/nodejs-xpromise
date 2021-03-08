@@ -24,6 +24,7 @@ export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
 
 export interface ExecuteOptions {
     concurrency?: number;
+    unlimitedRetries?: boolean;
     retryCount?: number;
     coolDownOnFailure?: boolean;
     initRetryDelay?: number;
@@ -33,16 +34,18 @@ export interface ExecuteOptions {
 }
 
 export class CExecuteOptions {
-    concurrency = 100;
-    retryCount = 0;
-    coolDownOnFailure = false;
-    initRetryDelay = 500;
-    maxRetryDelay = 5000;
-    retryDelayCoeff = 2.0;
-    waitCompleteBeforeExit = false;
+    concurrency: number = 100;
+    unlimitedRetries: boolean = false;
+    retryCount: number = 0;
+    coolDownOnFailure: boolean = false;
+    initRetryDelay: number = 500;
+    maxRetryDelay: number = 5000;
+    retryDelayCoeff: number = 2.0;
+    waitCompleteBeforeExit: boolean = false;
 }
 
 export interface RetryOptions {
+    unlimitedRetries?: boolean;
     retryCount?: number;
     initRetryDelay?: number;
     maxRetryDelay?: number;
@@ -51,12 +54,15 @@ export interface RetryOptions {
 }
 
 export class CRetryOptions {
-    retryCount = 3;
-    retryTimeout = 0;
-    initRetryDelay = 500;
-    maxRetryDelay = 5000;
-    retryDelayCoeff = 2.0;
-    canContinueCb?: (reason: any) => Resolvable<boolean> = undefined;
+    unlimitedRetries: boolean = false;
+    retryCount: number = 0;
+    initRetryDelay: number = 0;
+    maxRetryDelay: number = 0;
+    retryDelayCoeff: number = 0;
+    canContinueCb?: (reason: any) => Resolvable<boolean>;
+
+    retryTimeout: number = 0;
+    failureCount: number = 0;
 }
 
 export class Promise<T> extends BasePromise<T> {
@@ -67,30 +73,25 @@ export class Promise<T> extends BasePromise<T> {
         if (items == null || !items) {
             return Promise.resolve([]);
         }
+        
+        options = options || {};
+
         const myOptions = new CExecuteOptions();
-        if (options) {
-            if (!_.isNullOrUndefined(options.retryCount)) {
-                myOptions.retryCount = options.retryCount!;
-            }
-            if (!_.isNullOrUndefined(options.concurrency)) {
-                myOptions.concurrency = options.concurrency!;
-            }
-            if (!_.isNullOrUndefined(options.coolDownOnFailure)) {
-                myOptions.coolDownOnFailure = options.coolDownOnFailure!;
-            }
-            if (!_.isNullOrUndefined(options.initRetryDelay)) {
-                myOptions.initRetryDelay = options.initRetryDelay!;
-            }
-            if (!_.isNullOrUndefined(options.maxRetryDelay)) {
-                myOptions.maxRetryDelay = options.maxRetryDelay!;
-            }
-            if (!_.isNullOrUndefined(options.retryDelayCoeff)) {
-                myOptions.retryDelayCoeff = options.retryDelayCoeff!;
-            }
-            if (!_.isNullOrUndefined(options.waitCompleteBeforeExit)) {
-                myOptions.waitCompleteBeforeExit = options.waitCompleteBeforeExit!;
-            }
+
+        myOptions.concurrency = _.isNullOrUndefined(options.retryCount) ? 100 : options.concurrency!;
+        myOptions.unlimitedRetries = _.isNullOrUndefined(options.unlimitedRetries) ? false : options.unlimitedRetries!;
+        myOptions.retryCount = _.isNullOrUndefined(options.retryCount) ? 0 : options.retryCount!;
+        myOptions.initRetryDelay = _.isNullOrUndefined(options.initRetryDelay) ? 500 : options.initRetryDelay!;
+        myOptions.maxRetryDelay = _.isNullOrUndefined(options.maxRetryDelay) ? 5000 : options.maxRetryDelay!;
+        myOptions.retryDelayCoeff = _.isNullOrUndefined(options.retryDelayCoeff) ? 2.0 : options.retryDelayCoeff!;
+
+        if (!_.isNullOrUndefined(options.coolDownOnFailure)) {
+            myOptions.coolDownOnFailure = options.coolDownOnFailure!;
         }
+        if (!_.isNullOrUndefined(options.waitCompleteBeforeExit)) {
+            myOptions.waitCompleteBeforeExit = options.waitCompleteBeforeExit!;
+        }
+
         const executor = new Executor<T, R>(items, action, myOptions);
         return executor.execute();
     }
@@ -124,24 +125,17 @@ export class Promise<T> extends BasePromise<T> {
      * Simple retry logic
      */
     static retry<T>(action: () => Resolvable<T>, options?: RetryOptions): Promise<T> {
+        options = options || {};
+
         const myOptions = new CRetryOptions();
-        if (options) {
-            if (!_.isNullOrUndefined(options.retryCount)) {
-                myOptions.retryCount = options.retryCount!;
-            }
-            if (!_.isNullOrUndefined(options.initRetryDelay)) {
-                myOptions.initRetryDelay = options.initRetryDelay!;
-            }
-            if (!_.isNullOrUndefined(options.maxRetryDelay)) {
-                myOptions.maxRetryDelay = options.maxRetryDelay!;
-            }
-            if (!_.isNullOrUndefined(options.retryDelayCoeff)) {
-                myOptions.retryDelayCoeff = options.retryDelayCoeff!;
-            }
-            if (!_.isNullOrUndefined(options.canContinueCb)) {
-                myOptions.canContinueCb = options.canContinueCb!;
-            }
-        }
+        myOptions.unlimitedRetries = _.isNullOrUndefined(options.unlimitedRetries) ? false : options.unlimitedRetries!;
+        myOptions.retryCount = _.isNullOrUndefined(options.retryCount) ? 3 : options.retryCount!;
+        myOptions.initRetryDelay = _.isNullOrUndefined(options.initRetryDelay) ? 500 : options.initRetryDelay!;
+        myOptions.maxRetryDelay = _.isNullOrUndefined(options.maxRetryDelay) ? 5000 : options.maxRetryDelay!;
+        myOptions.retryDelayCoeff = _.isNullOrUndefined(options.retryDelayCoeff) ? 2.0 : options.retryDelayCoeff!;
+        myOptions.canContinueCb = _.isNullOrUndefined(options.canContinueCb) ? undefined : options.canContinueCb!;
+
+        myOptions.failureCount = 0;
         myOptions.retryTimeout = myOptions.initRetryDelay;
 
         return Promise._promiseRetryLoop(action, myOptions);
@@ -158,27 +152,28 @@ export class Promise<T> extends BasePromise<T> {
         action: () => Resolvable<T>,
         options: CRetryOptions,
     ): Promise<T> {
-        if (options.retryCount > 0) {
-            options.retryTimeout = Math.min(options.retryTimeout * options.retryDelayCoeff, options.maxRetryDelay);
-            options.retryCount--;
+        options.failureCount++;
 
+        if (options.unlimitedRetries || 
+            options.failureCount <= options.retryCount)
+        {
             if (options.canContinueCb) {
-                return Promise.resolve().then(() => {
-                    return Promise.resolve()
-                        .then(() => options.canContinueCb!(reason))
-                        .catch((reason) => {
-                            return Promise._promiseRetryHandleFailure(reason, action, options);
-                        })
-                        .then((result) => {
-                            if (result) {
-                                return Promise._promiseRetryWithTimeout(action, options);
-                            } else {
-                                throw reason;
-                            }
-                        });
+                return Promise.try(() => {
+                    return options.canContinueCb!(reason);
+                })
+                .catch((reason) => {
+                    return Promise._promiseRetryHandleFailure(reason, action, options);
+                })
+                .then((result) => {
+                    if (result) {
+                        return Promise._promiseRetryWithTimeout(action, options);
+                    } else {
+                        throw reason;
+                    }
                 });
             }
 
+            options.retryTimeout = Math.min(options.retryTimeout * options.retryDelayCoeff, options.maxRetryDelay);
             return Promise._promiseRetryWithTimeout(action, options);
         }
 

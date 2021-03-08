@@ -150,9 +150,8 @@ export class Executor<T, R> {
         itemInfo.errors++;
         itemInfo.lastError = reason;
 
-        if (itemInfo.errors > this.options.retryCount) {
-            this.isProcessingFailed = true;
-        } else {
+        if (this.options.unlimitedRetries || (itemInfo.errors <= this.options.retryCount))
+        {
             if (itemInfo.delay === null) {
                 itemInfo.delay = this.options.initRetryDelay;
             } else {
@@ -165,6 +164,11 @@ export class Executor<T, R> {
                 this.waitingCoolDown = true;
             }
         }
+        else
+        {
+            this.isProcessingFailed = true;
+        }
+
         this._tryProcess();
     }
 
