@@ -1,7 +1,7 @@
 import 'mocha';
 import should = require('should');
 
-import { BlockingResolver } from '../src';
+import { Promise, BlockingResolver } from '../src';
 
 describe('blocking-resolver', function () {
     
@@ -51,6 +51,26 @@ describe('blocking-resolver', function () {
         const resolver = new BlockingResolver(() => {
             counter++;
             return counter;
+        });
+
+        return Promise.resolve()
+            .then(() => Promise.all([resolver.resolve(), resolver.resolve()]))
+            .then(results => {
+                should(results[0]).be.equal(2);
+                should(results[1]).be.equal(2);
+            })
+
+    });
+
+    it('case-04', function () {
+
+        let counter = 1;
+
+        const resolver = new BlockingResolver(() => {
+            counter++;
+
+            return Promise.timeout(100)
+                .then(() => counter);
         });
 
         return Promise.resolve()

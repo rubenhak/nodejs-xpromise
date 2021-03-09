@@ -1,7 +1,7 @@
 import _ from 'the-lodash';
 import { Promise, Resolvable } from './promise';
 
-export type Callback<T> = () => T;
+export type Callback<T> = () => Resolvable<T>;
 
 export class BlockingResolver<T>
 {
