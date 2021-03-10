@@ -36,8 +36,7 @@ export class BlockingResolver<T>
             }
             this._isBusy = true;
 
-            Promise.resolve()
-                .then(() => this._cb())
+            Promise.try(this._cb)
                 .then(result => {
                     this._isBusy = false;
 
