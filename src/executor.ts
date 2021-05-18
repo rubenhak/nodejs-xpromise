@@ -52,7 +52,7 @@ export class Executor<T, R> {
         });
     }
 
-    private _tryProcess(): void {
+    private _tryProcess() {
         if (this.isProcessingFailed) {
             if (this.options.waitCompleteBeforeExit) {
                 if (this.unfinishedCount === 0) {
@@ -89,7 +89,10 @@ export class Executor<T, R> {
 
         if (this.items.length > 0) {
             const pauseMs = this.pauseTillNextTry ?? 500;
-            Promise.timeout(pauseMs).then(() => this._tryProcess());
+            Promise.timeout(pauseMs).then(() => {
+                this._tryProcess();
+                return null;
+            });
             return;
         }
 
@@ -98,7 +101,7 @@ export class Executor<T, R> {
         }
     }
 
-    _canProcessItem(now: moment.Moment, itemInfo: ItemInfo<T>): boolean {
+    private _canProcessItem(now: moment.Moment, itemInfo: ItemInfo<T>): boolean {
         if (!itemInfo.lastFailureMoment) {
             return true;
         }
@@ -121,16 +124,18 @@ export class Executor<T, R> {
         return false;
     }
 
-    _processItem(itemInfo: ItemInfo<T>): void {
+    private _processItem(itemInfo: ItemInfo<T>) {
         this.processing[itemInfo.index] = itemInfo;
         try {
             const actionResult = this.action(itemInfo.item);
             Promise.resolve(actionResult)
                 .then((result) => {
                     this._handleItemFinished(itemInfo, result);
+                    return null;
                 })
                 .catch((reason) => {
                     this._handleItemFailed(itemInfo, reason);
+                    return null;
                 });
         } catch (reason) {
             this._handleItemFailed(itemInfo, reason);
@@ -139,13 +144,13 @@ export class Executor<T, R> {
         this._tryProcess();
     }
 
-    private _handleItemFinished(itemInfo: ItemInfo<T>, result: R): void {
+    private _handleItemFinished(itemInfo: ItemInfo<T>, result: R) {
         delete this.processing[itemInfo.index];
         this.results[itemInfo.index] = result;
         this._tryProcess();
     }
 
-    private _handleItemFailed(itemInfo: ItemInfo<T>, reason: any): void {
+    private _handleItemFailed(itemInfo: ItemInfo<T>, reason: any) {
         delete this.processing[itemInfo.index];
         itemInfo.errors++;
         itemInfo.lastError = reason;
@@ -172,7 +177,7 @@ export class Executor<T, R> {
         this._tryProcess();
     }
 
-    private _finishSuccess(): void {
+    private _finishSuccess() {
         if (!this.rootResolve) {
             return;
         }
@@ -182,7 +187,7 @@ export class Executor<T, R> {
         rootResolve(this.results);
     }
 
-    private _finishFailure(error?: any): void {
+    private _finishFailure(error?: any) {
         if (!this.rootReject) {
             return;
         }

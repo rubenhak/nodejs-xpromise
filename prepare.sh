@@ -7,4 +7,6 @@ rm -rf node_modules/
 rm -rf dist/
 
 npm install
-npm update bluebird the-lodash
+npm update \
+    bluebird \
+    the-lodash
