@@ -203,8 +203,8 @@ export class MyPromise
     /*
      * Creates a new Promise
      */
-    static construct<T>(
-        callback: (resolve: (thenableOrResult: T | PromiseLike<T>) => void, 
+    static construct<T = void>(
+        callback: (resolve: (thenableOrResult: Resolvable<T>) => void, 
                    reject: (error?: any) => void) => void
     ): Promise<T>
     {
