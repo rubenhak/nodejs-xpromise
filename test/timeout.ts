@@ -1,10 +1,13 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 
-import { Promise } from '../src';
+import { MyPromise } from '../src';
 
 describe('Promise.timeout', () => {
     it('normal', () => {
-        return Promise.timeout(100).then(() => null);
+        return MyPromise.timeout(100).then(() => null);
+    });
+    it('delay', () => {
+        return MyPromise.delay(100).then(() => null);
     });
 });

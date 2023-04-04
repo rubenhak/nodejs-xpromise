@@ -6,7 +6,9 @@ cd $MY_DIR
 rm -rf node_modules/
 rm -rf dist/
 
-npm install
-npm update \
-    bluebird \
-    the-lodash
+# npm install
+# npm update \
+#     bluebird \
+#     the-lodash
+
+yarn

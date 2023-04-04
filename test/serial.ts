@@ -1,12 +1,13 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 
-import { Promise } from '../src';
+import { MyPromise } from '../src';
 
 describe('Promise.serial', () => {
-    it('normal', function () {
+
+    it('Promise.serialnormal', function () {
         const processed: Record<string, boolean> = {};
-        return Promise.serial(['aa', 'bb', 'cc'], (x) => {
+        return MyPromise.serial(['aa', 'bb', 'cc'], (x) => {
             processed[x] = true;
             return 'X' + x;
         }).then((result) => {
@@ -21,10 +22,11 @@ describe('Promise.serial', () => {
     });
 
     it('null', function () {
-        return Promise.serial(null, (x) => {
+        return MyPromise.serial(null, (x) => {
             return 'X' + x;
         }).then((result) => {
             should(result).be.deepEqual([]);
         });
     });
+
 });

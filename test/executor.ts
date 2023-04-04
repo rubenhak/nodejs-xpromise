@@ -1,13 +1,13 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 import _ from 'the-lodash';
 
-import { Promise } from '../src';
+import { MyPromise } from '../src';
 
 describe('Promise.execute', () => {
     it('case-small', () => {
         const processed: Record<string, boolean> = {};
-        return Promise.execute(['aa', 'bb', 'cc'], (x) => {
+        return MyPromise.execute(['aa', 'bb', 'cc'], (x) => {
             processed[x] = true;
             return 'X' + x;
         }).then((result) => {
@@ -38,7 +38,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(items, (x) => {
+        return MyPromise.execute(items, (x) => {
             processed[x.id] = true;
             return 'X' + x.id;
         }).then((result) => {
@@ -79,7 +79,7 @@ describe('Promise.execute', () => {
 
         let thereWasError = false;
 
-        return Promise.execute(items, (x) => {
+        return MyPromise.execute(items, (x) => {
             if (x.canFail) {
                 x.canFail = false;
                 throw new Error('I can fail once');
@@ -112,7 +112,7 @@ describe('Promise.execute', () => {
 
         let thereWasError = false;
 
-        return Promise.execute(items, (x) => {
+        return MyPromise.execute(items, (x) => {
             return Promise.resolve().then(() => {
                 if (x.canFail) {
                     throw new Error(x.message!);
@@ -147,7 +147,7 @@ describe('Promise.execute', () => {
 
         let thereWasError = false;
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 return Promise.resolve().then(() => {
@@ -190,7 +190,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 if (x.canFail) {
@@ -237,7 +237,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 if (x.failCount) {
@@ -286,7 +286,7 @@ describe('Promise.execute', () => {
 
         let thereWasError = false;
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 if (x.failCount) {
@@ -325,7 +325,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 if (x.failCount) {
@@ -372,7 +372,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 if (x.failCount) {
@@ -423,7 +423,7 @@ describe('Promise.execute', () => {
             expectedResult[key] = true;
         }
 
-        return Promise.execute(
+        return MyPromise.execute(
             items,
             (x) => {
                 processed[x.id] = true;

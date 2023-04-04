@@ -1,7 +1,7 @@
 import _ from 'the-lodash';
-import { Promise, Resolvable } from './promise';
+import { MyPromise, Resolvable } from './promise';
 
-export type Callback<T> = () => Resolvable<T>;
+export type Callback<T> = () => T | Promise<T>;
 
 export class BlockingResolver<T>
 {
@@ -9,7 +9,7 @@ export class BlockingResolver<T>
     private _value: T | null = null;
     private _isBusy: boolean = false;
 
-    private _resolveWaiters : ((thenableOrResult?: Resolvable<T>) => void)[] = [];
+    private _resolveWaiters : ((thenableOrResult: Resolvable<T>) => void)[] = [];
     private _rejectWaiters : ((error?: any) => void)[] = [];
 
     constructor(cb: Callback<T>)
@@ -27,7 +27,7 @@ export class BlockingResolver<T>
             return Promise.resolve(this._value!);
         }
         
-        return Promise.construct<T>((resolve, reject) => {
+        return MyPromise.construct<T>((resolve, reject) => {
             this._resolveWaiters.push(resolve);
             this._rejectWaiters.push(reject);
 
@@ -36,7 +36,7 @@ export class BlockingResolver<T>
             }
             this._isBusy = true;
 
-            Promise.try(this._cb)
+            MyPromise.try(this._cb)
                 .then(result => {
                     this._isBusy = false;
 

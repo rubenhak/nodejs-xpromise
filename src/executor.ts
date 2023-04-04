@@ -1,13 +1,13 @@
-import { Resolvable, MapperFunction, CExecuteOptions, Promise } from './index';
+import { MapperFunction, CExecuteOptions, Resolvable } from './index';
 import _ from 'the-lodash';
-import moment from 'moment';
+import { MyPromise } from './promise';
 
 interface ItemInfo<T> {
     item: T;
     index: number;
     errors: number;
     lastError?: any;
-    lastFailureMoment?: moment.Moment;
+    lastFailureMoment?: Date;
     delay: number | null;
 }
 
@@ -18,7 +18,7 @@ export class Executor<T, R> {
     action: MapperFunction<T, R>;
     options: CExecuteOptions;
     results: R[] = [];
-    rootResolve?: (thenableOrResult?: Resolvable<R[]>) => void;
+    rootResolve?: (thenableOrResult: Resolvable<R[]>) => void;
     rootReject?: (error?: any) => void;
     isProcessingFailed = false;
     waitingCoolDown = false;
@@ -44,7 +44,7 @@ export class Executor<T, R> {
     }
 
     execute(): Promise<R[]> {
-        return Promise.construct((resolve, reject) => {
+        return MyPromise.construct((resolve, reject) => {
             this.rootResolve = resolve;
             this.rootReject = reject;
 
@@ -76,7 +76,7 @@ export class Executor<T, R> {
             return;
         }
 
-        const now = moment();
+        const now = new Date();
 
         for (let i = 0; i < this.items.length; i++) {
             const itemInfo = this.items[i];
@@ -89,7 +89,7 @@ export class Executor<T, R> {
 
         if (this.items.length > 0) {
             const pauseMs = this.pauseTillNextTry ?? 500;
-            Promise.timeout(pauseMs).then(() => {
+            MyPromise.timeout(pauseMs).then(() => {
                 this._tryProcess();
                 return null;
             });
@@ -101,13 +101,13 @@ export class Executor<T, R> {
         }
     }
 
-    private _canProcessItem(now: moment.Moment, itemInfo: ItemInfo<T>): boolean {
+    private _canProcessItem(now: Date, itemInfo: ItemInfo<T>): boolean {
         if (!itemInfo.lastFailureMoment) {
             return true;
         }
 
         if (itemInfo.delay) {
-            const diff = moment.duration(now.diff(itemInfo.lastFailureMoment)).asMilliseconds();
+            const diff = now.valueOf() - itemInfo.lastFailureMoment.valueOf();
             if (diff >= itemInfo.delay) {
                 return true;
             } else {
@@ -163,7 +163,7 @@ export class Executor<T, R> {
                 itemInfo.delay = Math.min(this.options.maxRetryDelay, itemInfo.delay * this.options.retryDelayCoeff);
             }
 
-            itemInfo.lastFailureMoment = moment();
+            itemInfo.lastFailureMoment = new Date();
             this.items.push(itemInfo);
             if (this.options.coolDownOnFailure) {
                 this.waitingCoolDown = true;

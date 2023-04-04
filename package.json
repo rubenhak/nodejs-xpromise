@@ -25,10 +25,7 @@
   "homepage": "https://github.com/rubenhak/nodejs-xpromise#readme",
   "license": "MIT",
   "dependencies": {
-    "@types/bluebird": "3.5.36",
-    "bluebird": "3.7.2",
-    "moment": "2.29.4",
-    "the-lodash": "^2.0.9"
+    "the-lodash": "^2.0.12"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",

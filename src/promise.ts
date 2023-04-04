@@ -1,26 +1,9 @@
-import { Promise as BasePromise } from 'bluebird';
 import _ from 'the-lodash';
 import { Executor } from './executor';
 
-interface PromiseLike<T> {
-    then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
-    ): PromiseLike<TResult1 | TResult2>;
-}
+export type Resolvable<T> = T | PromiseLike<T>;
 
-interface IPromise<T> {
-    then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
-    ): IPromise<TResult1 | TResult2>;
-    catch<TResult = never>(
-        onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null,
-    ): IPromise<T | TResult>;
-}
-
-export type Resolvable<R> = R | Promise<R>;
-export type MapperFunction<T, R> = (item: T) => Resolvable<R>;
+export type MapperFunction<T, R> = (item: T) => R | Promise<R>;
 
 export interface ExecuteOptions {
     concurrency?: number;
@@ -50,7 +33,7 @@ export interface RetryOptions {
     initRetryDelay?: number;
     maxRetryDelay?: number;
     retryDelayCoeff?: number;
-    canContinueCb?: (reason: any) => Resolvable<boolean>;
+    canContinueCb?: (reason: any) => boolean | Promise<boolean>;
 }
 
 export class CRetryOptions {
@@ -59,13 +42,14 @@ export class CRetryOptions {
     initRetryDelay: number = 0;
     maxRetryDelay: number = 0;
     retryDelayCoeff: number = 0;
-    canContinueCb?: (reason: any) => Resolvable<boolean>;
+    canContinueCb?: (reason: any) => boolean | Promise<boolean>;
 
     retryTimeout: number = 0;
     failureCount: number = 0;
 }
 
-export class Promise<T> extends BasePromise<T> {
+export class MyPromise
+{
     /*
      * Processes items in parallel
      */
@@ -78,7 +62,9 @@ export class Promise<T> extends BasePromise<T> {
 
         const myOptions = new CExecuteOptions();
 
-        myOptions.concurrency = _.isNullOrUndefined(options.retryCount) ? 100 : options.concurrency!;
+        myOptions.concurrency = _.isNullOrUndefined(options.concurrency) ? 100 : options.concurrency!;
+        myOptions.concurrency = Math.max(1, myOptions.concurrency);
+
         myOptions.unlimitedRetries = _.isNullOrUndefined(options.unlimitedRetries) ? false : options.unlimitedRetries!;
         myOptions.retryCount = _.isNullOrUndefined(options.retryCount) ? 0 : options.retryCount!;
         myOptions.initRetryDelay = _.isNullOrUndefined(options.initRetryDelay) ? 500 : options.initRetryDelay!;
@@ -103,22 +89,31 @@ export class Promise<T> extends BasePromise<T> {
         if (!items) {
             return Promise.resolve([]);
         }
-        return Promise.map(items, action);
+        return Promise.all(items.map(x => action(x)));
     }
 
     /*
      * Processes items in sequence
      */
     static serial<T, R>(items: T[] | null, action: MapperFunction<T, R>): Promise<R[]> {
-        if (!items) {
-            return Promise.resolve([]);
+        return MyPromise.execute(items, action, {
+            concurrency: 0,
+            unlimitedRetries: false,
+            retryCount: 0,
+        });
+    }
+
+    static async try<T>(action: () => Resolvable<T>): Promise<T>
+    {
+        try
+        {
+            const res = await action();
+            return res;
         }
-        const results: R[] = [];
-        return Promise.each(items, (x) => {
-            return Promise.resolve(action(x)).then((result) => {
-                results.push(result);
-            });
-        }).then(() => results);
+        catch(err: any)
+        {
+            throw err;
+        }
     }
 
     /*
@@ -138,12 +133,12 @@ export class Promise<T> extends BasePromise<T> {
         myOptions.failureCount = 0;
         myOptions.retryTimeout = myOptions.initRetryDelay;
 
-        return Promise._promiseRetryLoop(action, myOptions);
+        return MyPromise._promiseRetryLoop(action, myOptions);
     }
 
     private static _promiseRetryLoop<T>(action: () => Resolvable<T>, options: CRetryOptions): Promise<T> {
-        return Promise.try(action).catch((reason) => {
-            return Promise._promiseRetryHandleFailure(reason, action, options);
+        return MyPromise.try(action).catch((reason) => {
+            return MyPromise._promiseRetryHandleFailure(reason, action, options);
         });
     }
 
@@ -158,15 +153,15 @@ export class Promise<T> extends BasePromise<T> {
             options.failureCount <= options.retryCount)
         {
             if (options.canContinueCb) {
-                return Promise.try(() => {
+                return MyPromise.try(() => {
                     return options.canContinueCb!(reason);
                 })
                 .catch((reason) => {
-                    return Promise._promiseRetryHandleFailure(reason, action, options);
+                    return MyPromise._promiseRetryHandleFailure(reason, action, options);
                 })
                 .then((result) => {
                     if (result) {
-                        return Promise._promiseRetryWithTimeout(action, options);
+                        return MyPromise._promiseRetryWithTimeout(action, options);
                     } else {
                         throw reason;
                     }
@@ -174,24 +169,24 @@ export class Promise<T> extends BasePromise<T> {
             }
 
             options.retryTimeout = Math.min(options.retryTimeout * options.retryDelayCoeff, options.maxRetryDelay);
-            return Promise._promiseRetryWithTimeout(action, options);
+            return MyPromise._promiseRetryWithTimeout(action, options);
         }
 
         throw reason;
     }
 
     private static _promiseRetryWithTimeout<T>(action: () => Resolvable<T>, options: CRetryOptions): Promise<T> {
-        return Promise.timeout(options.retryTimeout).then(() => Promise._promiseRetryLoop(action, options));
+        return MyPromise.timeout(options.retryTimeout).then(() => MyPromise._promiseRetryLoop(action, options));
     }
 
     /*
      * Returns a promise which resolves in specified time delay
      */
-    static timeout(timeoutMs: number): Promise<void> {
+    static delay(timeoutMs: number): Promise<void> {
         if (!timeoutMs) {
             return Promise.resolve();
         }
-        return new BasePromise<void>(function (fulfill, reject) {
+        return MyPromise.construct<void>(function (fulfill, reject) {
             setTimeout(() => {
                 fulfill();
             }, timeoutMs);
@@ -199,20 +194,25 @@ export class Promise<T> extends BasePromise<T> {
     }
 
     /*
-     * Creates a new Promise
+     * Returns a promise which resolves in specified time delay
      */
-    static construct<T>(
-        callback: (resolve: (thenableOrResult?: Resolvable<T>) => void, reject: (error?: any) => void) => void,
-    ): Promise<T> {
-        return new BasePromise<T>(callback).then((res: T) => Promise.resolve(res));
+    static timeout(timeoutMs: number): Promise<void> {
+        return MyPromise.delay(timeoutMs);
     }
 
     /*
-     * Convert
+     * Creates a new Promise
      */
-    static convert<T>(another: IPromise<T>): Promise<T> {
-        return Promise.construct<T>((resolve, reject) => {
-            another.then((result) => resolve(result)).catch((reason) => reject(reason));
-        });
+    static construct<T>(
+        callback: (resolve: (thenableOrResult: T | PromiseLike<T>) => void, 
+                   reject: (error?: any) => void) => void
+    ): Promise<T>
+    {
+        return new Promise<T>(
+            function(resolve, reject)
+            {
+                return callback(resolve, reject);
+            }
+        );
     }
 }

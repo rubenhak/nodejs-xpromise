@@ -1,7 +1,7 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 
-import { Promise, BlockingResolver } from '../src';
+import { BlockingResolver, MyPromise } from '../src';
 
 describe('blocking-resolver', function () {
     
@@ -69,7 +69,7 @@ describe('blocking-resolver', function () {
         const resolver = new BlockingResolver(() => {
             counter++;
 
-            return Promise.timeout(100)
+            return MyPromise.timeout(100)
                 .then(() => counter);
         });
 

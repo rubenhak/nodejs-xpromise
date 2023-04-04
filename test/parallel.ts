@@ -1,12 +1,12 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 
-import { Promise } from '../src';
+import { MyPromise } from '../src';
 
 describe('Promise.parallel', () => {
     it('normal', () => {
         const processed: Record<string, boolean> = {};
-        return Promise.parallel(['aa', 'bb', 'cc'], (x) => {
+        return MyPromise.parallel(['aa', 'bb', 'cc'], (x) => {
             processed[x] = true;
             return 'X' + x;
         }).then((result) => {
@@ -21,7 +21,7 @@ describe('Promise.parallel', () => {
     });
 
     it('null', () => {
-        return Promise.parallel(null, (x) => {
+        return MyPromise.parallel(null, (x) => {
             return 'X' + x;
         }).then((result) => {
             should(result).be.deepEqual([]);

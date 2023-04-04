@@ -1,12 +1,12 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 
-import { Promise } from '../src';
+import { MyPromise } from '../src';
 
 describe('Promise.retry', function () {
     it('noError', function () {
         let counter = 0;
-        return Promise.retry(() => {
+        return MyPromise.retry(() => {
             counter += 1;
         }).then(() => {
             should(counter).be.exactly(1);
@@ -15,7 +15,7 @@ describe('Promise.retry', function () {
 
     it('oneTimeError', function () {
         let counter = 0;
-        return Promise.retry(
+        return MyPromise.retry(
             () => {
                 counter += 1;
                 if (counter == 1) {
@@ -33,7 +33,7 @@ describe('Promise.retry', function () {
 
     it('twoTimesError', function () {
         let counter = 0;
-        return Promise.retry(
+        return MyPromise.retry(
             () => {
                 counter += 1;
                 if (counter <= 2) {
@@ -53,7 +53,7 @@ describe('Promise.retry', function () {
         let counter = 0;
         let isThenCalled = false;
         let isCatchCalled = false;
-        return Promise.retry(
+        return MyPromise.retry(
             () => {
                 counter += 1;
                 throw new Error('Error Number ' + counter);
@@ -80,7 +80,7 @@ describe('Promise.retry', function () {
         let counter = 0;
         let isThenCalled = false;
         let isCatchCalled = false;
-        return Promise.retry(
+        return MyPromise.retry(
             () => {
                 counter += 1;
                 throw new Error('Error Number ' + counter);
@@ -106,7 +106,7 @@ describe('Promise.retry', function () {
 
     it('successWithCanContinuePromise', function () {
         let counter = 0;
-        return Promise.retry(
+        return MyPromise.retry(
             () => {
                 counter += 1;
                 if (counter <= 2) {
@@ -117,7 +117,7 @@ describe('Promise.retry', function () {
                 retryCount: 3,
                 initRetryDelay: 100,
                 canContinueCb: () => {
-                    return Promise.timeout(100).then(() => true);
+                    return MyPromise.timeout(100).then(() => true);
                 },
             },
         ).then(() => {
