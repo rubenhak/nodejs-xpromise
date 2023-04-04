@@ -1,7 +1,7 @@
 import _ from 'the-lodash';
 import { MyPromise, Resolvable } from './promise';
 
-export type Callback<T> = () => T | Promise<T>;
+export type Callback<T> = () => Resolvable<T>;
 
 export class BlockingResolver<T>
 {
@@ -46,7 +46,7 @@ export class BlockingResolver<T>
 
                     this._value = result;
 
-                    for(let waiter of waiters) {
+                    for(const waiter of waiters) {
                         waiter(result);
                     }
 
@@ -59,7 +59,7 @@ export class BlockingResolver<T>
                     this._resolveWaiters = [];
                     this._rejectWaiters = [];
 
-                    for(let waiter of waiters) {
+                    for(const waiter of waiters) {
                         waiter(reason);
                     }
                     
