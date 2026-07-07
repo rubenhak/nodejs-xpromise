@@ -1,5 +1,5 @@
-# Node.js BlueBird Promsie Extension Library
-Enhances BlueBird promise library with useful capabilites.
+# Node.js Promise Extension Library
+Enhances standard Promise library with useful capabilites.
 
 ## Promise.serial
 Used for running multiple promises in sequence. If one operation fails the processing fails, root promise stops execution and fails.
@@ -107,16 +107,4 @@ function doSomething()
 {
     return db.insert('Example');
 }
-```
-
-
-## Publishing
-
-```sh
-$ ./publish.sh
-```
-
-### Updating NPM Key
-```sh
-$ travis encrypt <NPM-KEY-GOES-HERE> --add deploy.api_key
 ```
